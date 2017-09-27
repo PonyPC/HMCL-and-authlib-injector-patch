@@ -1,0 +1,1811 @@
+diff --git a/HMCL/src/main/java/org/jackhuang/hmcl/setting/Config.java b/HMCL/src/main/java/org/jackhuang/hmcl/setting/Config.java
+index 2be2077..7b9f060 100644
+--- a/HMCL/src/main/java/org/jackhuang/hmcl/setting/Config.java
++++ b/HMCL/src/main/java/org/jackhuang/hmcl/setting/Config.java
+@@ -51,6 +51,8 @@ public final class Config implements Cloneable {
+     private String bgpath;
+     @SerializedName("commonpath")
+     private String commonpath;
++    @SerializedName("serverid")
++    private String serverid;
+     @SerializedName("clientToken")
+     private final String clientToken;
+     @SerializedName("proxyHost")
+@@ -195,6 +197,15 @@ public final class Config implements Cloneable {
+         Settings.save();
+     }
+ 
++    public String getServerID() {
++        return serverid;
++    }
++
++    public void setServerID(String serverid) {
++        this.serverid = serverid;
++        Settings.save();
++    }
++
+     public String getClientToken() {
+         return clientToken;
+     }
+diff --git a/HMCL/src/main/java/org/jackhuang/hmcl/ui/LauncherSettingsPanel.form b/HMCL/src/main/java/org/jackhuang/hmcl/ui/LauncherSettingsPanel.form
+index c86844c..4d84ee2 100644
+--- a/HMCL/src/main/java/org/jackhuang/hmcl/ui/LauncherSettingsPanel.form
++++ b/HMCL/src/main/java/org/jackhuang/hmcl/ui/LauncherSettingsPanel.form
+@@ -101,6 +101,7 @@
+                               <Group type="103" groupAlignment="0" attributes="0">
+                                   <Component id="lblDownloadSource" alignment="0" min="-2" max="-2" attributes="0"/>
+                                   <Component id="lblCommonPath" alignment="0" min="-2" max="-2" attributes="0"/>
++                                  <Component id="lblServerID" alignment="0" min="-2" max="-2" attributes="0"/>
+                                   <Component id="lblLang" alignment="0" min="-2" max="-2" attributes="0"/>
+                                   <Component id="lblProxy" alignment="0" min="-2" max="-2" attributes="0"/>
+                               </Group>
+@@ -129,6 +130,8 @@
+                                   <Group type="102" alignment="0" attributes="0">
+                                       <Component id="txtCommonPath" max="32767" attributes="0"/>
+                                       <EmptySpace max="-2" attributes="0"/>
++                                      <Component id="txtServerID" max="32767" attributes="0"/>
++                                      <EmptySpace max="-2" attributes="0"/>
+                                       <Component id="btnSetCommonPath" min="-2" max="-2" attributes="0"/>
+                                   </Group>
+                                   <Component id="cboDownloadSource" alignment="1" max="32767" attributes="0"/>
+@@ -148,6 +151,10 @@
+                           <Component id="txtCommonPath" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
+                           <Component id="btnSetCommonPath" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
+                       </Group>
++                      <Group type="103" groupAlignment="3" attributes="0">
++                          <Component id="lblServerID" alignment="3" min="-2" max="-2" attributes="0"/>
++                          <Component id="txtServerID" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
++                      </Group>
+                       <EmptySpace max="-2" attributes="0"/>
+                       <Group type="103" groupAlignment="3" attributes="0">
+                           <Component id="lblDownloadSource" alignment="3" min="-2" max="-2" attributes="0"/>
+@@ -281,6 +288,23 @@
+                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnSetCommonPathActionPerformed"/>
+               </Events>
+             </Component>
++            <Component class="javax.swing.JLabel" name="lblServerID">
++              <Properties>
++                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
++                  <ResourceString bundle="org/jackhuang/hmcl/lang/I18N.properties" key="launcher.serverid" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
++                </Property>
++              </Properties>
++            </Component>
++            <Component class="javax.swing.JTextField" name="txtServerID">
++              <Properties>
++                <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
++                  <ResourceString bundle="org/jackhuang/hmcl/lang/I18N.properties" key="launcher.serverid_tip" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
++                </Property>
++              </Properties>
++              <Events>
++                <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="txtServerIDFocusLost"/>
++              </Events>
++            </Component>
+             <Component class="javax.swing.JButton" name="btnCheckUpdate">
+               <Properties>
+                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+diff --git a/HMCL/src/main/java/org/jackhuang/hmcl/ui/LauncherSettingsPanel.java b/HMCL/src/main/java/org/jackhuang/hmcl/ui/LauncherSettingsPanel.java
+index 615b49f..6603e45 100644
+--- a/HMCL/src/main/java/org/jackhuang/hmcl/ui/LauncherSettingsPanel.java
++++ b/HMCL/src/main/java/org/jackhuang/hmcl/ui/LauncherSettingsPanel.java
+@@ -72,6 +72,7 @@ public class LauncherSettingsPanel extends RepaintPage {
+ 
+         txtBackgroundPath.setText(Settings.getInstance().getBgpath());
+         txtCommonPath.setText(Settings.getInstance().getCommonpath());
++        txtServerID.setText(Settings.getInstance().getServerID());
+         txtProxyHost.setText(Settings.getInstance().getProxyHost());
+         txtProxyPort.setText(Settings.getInstance().getProxyPort());
+         txtProxyUsername.setText(Settings.getInstance().getProxyUserName());
+@@ -119,6 +120,8 @@ public class LauncherSettingsPanel extends RepaintPage {
+         lblDownloadSource = new javax.swing.JLabel();
+         lblCommonPath = new javax.swing.JLabel();
+         txtCommonPath = new javax.swing.JTextField();
++        lblServerID = new javax.swing.JLabel();
++        txtServerID = new javax.swing.JTextField();
+         btnSetCommonPath = new javax.swing.JButton();
+         btnCheckUpdate = new javax.swing.JButton();
+         btnMCBBS = new javax.swing.JButton();
+@@ -203,6 +206,15 @@ public class LauncherSettingsPanel extends RepaintPage {
+             }
+         });
+ 
++        lblServerID.setText(C.i18n("launcher.serverid")); // NOI18N
++
++        txtServerID.setToolTipText(C.i18n("launcher.serverid_tip")); // NOI18N
++        txtServerID.addFocusListener(new java.awt.event.FocusAdapter() {
++            public void focusLost(java.awt.event.FocusEvent evt) {
++                txtServerIDFocusLost(evt);
++            }
++        });
++
+         btnSetCommonPath.setText(C.i18n("ui.button.explore")); // NOI18N
+         btnSetCommonPath.addActionListener(new java.awt.event.ActionListener() {
+             public void actionPerformed(java.awt.event.ActionEvent evt) {
+@@ -257,6 +269,7 @@ public class LauncherSettingsPanel extends RepaintPage {
+                         .addGroup(pnlGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                             .addComponent(lblDownloadSource)
+                             .addComponent(lblCommonPath)
++                            .addComponent(lblServerID)
+                             .addComponent(lblLang)
+                             .addComponent(lblProxy))
+                         .addGap(28, 28, 28)
+@@ -280,6 +293,7 @@ public class LauncherSettingsPanel extends RepaintPage {
+                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                 .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                             .addComponent(cboLang, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
++                            .addComponent(txtServerID, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                             .addGroup(pnlGeneralLayout.createSequentialGroup()
+                                 .addComponent(txtCommonPath)
+                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+@@ -296,6 +310,10 @@ public class LauncherSettingsPanel extends RepaintPage {
+                     .addComponent(txtCommonPath, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                     .addComponent(btnSetCommonPath, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
+                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
++                .addGroup(pnlGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
++                    .addComponent(lblServerID)
++                    .addComponent(txtServerID, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
++                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                 .addGroup(pnlGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                     .addComponent(lblDownloadSource)
+                     .addComponent(cboDownloadSource, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
+@@ -614,6 +632,10 @@ public class LauncherSettingsPanel extends RepaintPage {
+         Settings.getInstance().setCommonpath(txtCommonPath.getText());
+     }//GEN-LAST:event_txtCommonPathFocusLost
+ 
++    private void txtServerIDFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtCommonPathFocusLost
++        Settings.getInstance().setServerID(txtServerID.getText());
++    }//GEN-LAST:event_txtCommonPathFocusLost
++
+     private void cboFontFamilyItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboFontFamilyItemStateChanged
+         Settings.getInstance().setFontFamily(evt.getItem().toString());
+         lblExample.setFont(Settings.getInstance().getConsoleFont());
+@@ -645,6 +667,7 @@ public class LauncherSettingsPanel extends RepaintPage {
+     private javax.swing.JLabel lblAbout;
+     private javax.swing.JLabel lblBackground;
+     private javax.swing.JLabel lblCommonPath;
++    private javax.swing.JLabel lblServerID;
+     private javax.swing.JLabel lblDownloadSource;
+     private javax.swing.JLabel lblExample;
+     private javax.swing.JLabel lblFont;
+@@ -664,6 +687,7 @@ public class LauncherSettingsPanel extends RepaintPage {
+     private javax.swing.JTabbedPane tabLauncherSettings;
+     private javax.swing.JTextField txtBackgroundPath;
+     private javax.swing.JTextField txtCommonPath;
++    private javax.swing.JTextField txtServerID;
+     private javax.swing.JTextField txtProxyHost;
+     private javax.swing.JTextField txtProxyPassword;
+     private javax.swing.JTextField txtProxyPort;
+diff --git a/HMCL/src/main/java/org/jackhuang/hmcl/ui/MainPagePanel.form b/HMCL/src/main/java/org/jackhuang/hmcl/ui/MainPagePanel.form
+index d929e9a..2197fc8 100644
+--- a/HMCL/src/main/java/org/jackhuang/hmcl/ui/MainPagePanel.form
++++ b/HMCL/src/main/java/org/jackhuang/hmcl/ui/MainPagePanel.form
+@@ -78,6 +78,7 @@
+                                   <Component id="txtPlayerName" max="32767" attributes="0"/>
+                               </Group>
+                           </Group>
++                          <Component id="btnRegister" alignment="0" max="32767" attributes="0"/>
+                           <Component id="btnExportModpack" alignment="0" max="32767" attributes="0"/>
+                           <Component id="btnImportModpack" alignment="0" max="32767" attributes="0"/>
+                       </Group>
+@@ -276,6 +277,16 @@
+                 </Container>
+               </SubComponents>
+             </Container>
++            <Component class="javax.swing.JButton" name="btnRegister">
++              <Properties>
++                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
++                  <ResourceString bundle="org/jackhuang/hmcl/lang/I18N.properties" key="ui.button.register" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
++                </Property>
++              </Properties>
++              <Events>
++                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnRegisterActionPerformed"/>
++              </Events>
++            </Component>
+             <Component class="javax.swing.JButton" name="btnImportModpack">
+               <Properties>
+                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+diff --git a/HMCL/src/main/java/org/jackhuang/hmcl/ui/MainPagePanel.java b/HMCL/src/main/java/org/jackhuang/hmcl/ui/MainPagePanel.java
+index 364f66b..db0179b 100644
+--- a/HMCL/src/main/java/org/jackhuang/hmcl/ui/MainPagePanel.java
++++ b/HMCL/src/main/java/org/jackhuang/hmcl/ui/MainPagePanel.java
+@@ -135,6 +135,7 @@ public class MainPagePanel extends Page {
+         txtPassword = new javax.swing.JPasswordField();
+         pnlLogOut = new javax.swing.JPanel();
+         btnLogout = new javax.swing.JButton();
++        btnRegister = new javax.swing.JButton();
+         btnImportModpack = new javax.swing.JButton();
+         btnExportModpack = new javax.swing.JButton();
+ 
+@@ -251,6 +252,13 @@ public class MainPagePanel extends Page {
+ 
+         pnlPassword.add(pnlLogOut, "card3");
+ 
++        btnRegister.setText(C.i18n("ui.button.register")); // NOI18N
++        btnRegister.addActionListener(new java.awt.event.ActionListener() {
++            public void actionPerformed(java.awt.event.ActionEvent evt) {
++                btnRegisterActionPerformed(evt);
++            }
++        });
++
+         btnImportModpack.setText(C.i18n("modpack.task.install")); // NOI18N
+         btnImportModpack.addActionListener(new java.awt.event.ActionListener() {
+             public void actionPerformed(java.awt.event.ActionEvent evt) {
+@@ -289,6 +297,7 @@ public class MainPagePanel extends Page {
+                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                             .addComponent(cboLoginMode, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                             .addComponent(txtPlayerName)))
++                    .addComponent(btnRegister, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                     .addComponent(btnExportModpack, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                     .addComponent(btnImportModpack, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                 .addContainerGap())
+@@ -314,6 +323,8 @@ public class MainPagePanel extends Page {
+                     .addComponent(txtPlayerName, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
+                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                 .addComponent(pnlPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
++                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
++                .addComponent(btnRegister)
+                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 254, Short.MAX_VALUE)
+                 .addComponent(btnImportModpack)
+                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+@@ -377,6 +388,13 @@ public class MainPagePanel extends Page {
+         SwingUtilities.invokeLater(this::repaint);
+     }//GEN-LAST:event_btnLogoutActionPerformed
+ 
++    private void btnRegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
++        String serverid = Settings.getInstance().getServerID();
++		if(serverid == null || serverid.isEmpty())
++			serverid = "account";
++        SwingUtils.openLink("http://login.nide8.com/" + serverid + "/register");
++    }//GEN-LAST:event_btnLogoutActionPerformed
++
+     private void txtPlayerNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPlayerNameKeyPressed
+         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+             IAuthenticator l = Settings.getInstance().getAuthenticator();
+@@ -453,6 +471,7 @@ public class MainPagePanel extends Page {
+     private javax.swing.JButton btnExportModpack;
+     private javax.swing.JButton btnImportModpack;
+     private javax.swing.JButton btnLogout;
++    private javax.swing.JButton btnRegister;
+     private javax.swing.JComboBox cboLoginMode;
+     private javax.swing.JComboBox cboProfiles;
+     private javax.swing.JComboBox cboVersions;
+@@ -471,11 +490,17 @@ public class MainPagePanel extends Page {
+     // End of variables declaration//GEN-END:variables
+ 
+     final Consumer<AuthenticatorChangedEvent> onAuthChanged = (x) -> {
+-        if (x.getValue().hasPassword()) {
++        if (x.getValue().isNide8()) {
++            pnlPassword.setVisible(true);
++            btnRegister.setVisible(true);
++            lblUserName.setText(C.i18n("login.username"));
++        } else if (x.getValue().hasPassword()) {
+             pnlPassword.setVisible(true);
++            btnRegister.setVisible(false);
+             lblUserName.setText(C.i18n("login.account"));
+         } else {
+             pnlPassword.setVisible(false);
++            btnRegister.setVisible(false);
+             lblUserName.setText(C.i18n("login.username"));
+         }
+ 
+diff --git a/HMCL/src/main/java/org/jackhuang/hmcl/util/DefaultPlugin.java b/HMCL/src/main/java/org/jackhuang/hmcl/util/DefaultPlugin.java
+index 9127e36..427d4b5 100644
+--- a/HMCL/src/main/java/org/jackhuang/hmcl/util/DefaultPlugin.java
++++ b/HMCL/src/main/java/org/jackhuang/hmcl/util/DefaultPlugin.java
+@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.api.ui.AddTabCallback;
+ import org.jackhuang.hmcl.api.IPlugin;
+ import org.jackhuang.hmcl.core.auth.OfflineAuthenticator;
+ import org.jackhuang.hmcl.core.auth.YggdrasilAuthenticator;
++import org.jackhuang.hmcl.core.auth.Nide8Authenticator;
+ import org.jackhuang.hmcl.setting.Settings;
+ import org.jackhuang.hmcl.ui.GameSettingsPanel;
+ import org.jackhuang.hmcl.ui.LauncherSettingsPanel;
+@@ -50,6 +51,8 @@ public class DefaultPlugin implements IPlugin {
+     @Override
+     public void onRegisterAuthenticators(Consumer<IAuthenticator> apply) {
+         String clientToken = Settings.getInstance().getClientToken();
++        String serverid = Settings.getInstance().getServerID();
++        auths.add(new Nide8Authenticator(serverid, clientToken));
+         auths.add(new OfflineAuthenticator(clientToken));
+         auths.add(new YggdrasilAuthenticator(clientToken));
+ 
+diff --git a/HMCL/src/main/java/org/jackhuang/hmcl/util/HMCLMinecraftLoader.java b/HMCL/src/main/java/org/jackhuang/hmcl/util/HMCLMinecraftLoader.java
+index 69ba369..da072b1 100644
+--- a/HMCL/src/main/java/org/jackhuang/hmcl/util/HMCLMinecraftLoader.java
++++ b/HMCL/src/main/java/org/jackhuang/hmcl/util/HMCLMinecraftLoader.java
+@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.api.game.LaunchOptions;
+ import org.jackhuang.hmcl.core.GameException;
+ import org.jackhuang.hmcl.core.launch.MinecraftLoader;
+ import org.jackhuang.hmcl.core.service.IMinecraftService;
++import org.jackhuang.hmcl.setting.Settings;
+ 
+ /**
+  *
+@@ -32,7 +33,7 @@ import org.jackhuang.hmcl.core.service.IMinecraftService;
+ public class HMCLMinecraftLoader extends MinecraftLoader {
+     
+     public HMCLMinecraftLoader(LaunchOptions p, IMinecraftService provider, UserProfileProvider lr) throws GameException {
+-        super(p, provider, lr);
++        super(p, provider, Settings.getInstance().getServerID(), lr);
+     }
+ 
+     @Override
+diff --git a/HMCLAPI/src/main/java/org/jackhuang/hmcl/api/auth/IAuthenticator.java b/HMCLAPI/src/main/java/org/jackhuang/hmcl/api/auth/IAuthenticator.java
+index d6daf27..c548b34 100644
+--- a/HMCLAPI/src/main/java/org/jackhuang/hmcl/api/auth/IAuthenticator.java
++++ b/HMCLAPI/src/main/java/org/jackhuang/hmcl/api/auth/IAuthenticator.java
+@@ -41,6 +41,8 @@ public interface IAuthenticator {
+      * @return has password?
+      */
+     boolean hasPassword();
++	
++    boolean isNide8();
+ 
+     String id();
+ 
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/AbstractAuthenticator.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/AbstractAuthenticator.java
+index f3ebb65..b03e2ea 100644
+--- a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/AbstractAuthenticator.java
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/AbstractAuthenticator.java
+@@ -58,6 +58,11 @@ public abstract class AbstractAuthenticator implements IAuthenticator {
+         return true;
+     }
+ 
++    @Override
++    public boolean isNide8() {
++        return false;
++    }
++
+     @Override
+     public boolean isLoggedIn() {
+         return false;
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/Nide8Authenticator.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/Nide8Authenticator.java
+new file mode 100644
+index 0000000..f0dae48
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/Nide8Authenticator.java
+@@ -0,0 +1,154 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth;
++
++import org.jackhuang.hmcl.api.auth.UserProfileProvider;
++import org.jackhuang.hmcl.api.auth.LoginInfo;
++import org.jackhuang.hmcl.api.auth.AuthenticationException;
++import com.google.gson.GsonBuilder;
++import java.net.Proxy;
++import java.util.Map;
++import org.jackhuang.hmcl.util.C;
++import org.jackhuang.hmcl.util.ArrayUtils;
++import org.jackhuang.hmcl.core.auth.nide8.GameProfile;
++import org.jackhuang.hmcl.core.auth.nide8.UUIDTypeAdapter;
++import org.jackhuang.hmcl.core.auth.nide8.PropertyMap;
++import org.jackhuang.hmcl.core.auth.nide8.YggdrasilAuthentication;
++import org.jackhuang.hmcl.util.ui.MessageBox;
++import org.jackhuang.hmcl.util.ui.SwingUtils;
++
++/**
++ *
++ * @author huangyuhui
++ */
++public final class Nide8Authenticator extends AbstractAuthenticator {
++
++    YggdrasilAuthentication ua;
++
++    public Nide8Authenticator(String serverid, String clientToken) {
++        super(clientToken);
++        ua = new YggdrasilAuthentication(Proxy.NO_PROXY, clientToken);
++		if(serverid != null && !serverid.isEmpty())
++			ua.setServerID(serverid + '/');
++    }
++
++    @Override
++    public UserProfileProvider login(LoginInfo info) throws AuthenticationException {
++        UserProfileProvider result = new UserProfileProvider();
++        if (ua.canPlayOnline()) {
++            result.setUserName(ua.getSelectedProfile().name)
++                    .setUserId(UUIDTypeAdapter.fromUUID(ua.getSelectedProfile().id));
++        } else {
++            String usr = info.username;
++            if (info.username == null)
++                throw new AuthenticationException(C.i18n("login.no_Player007"));
++            String pwd = info.password;
++
++            if (!ua.isLoggedIn())
++                ua.setPassword(pwd);
++            ua.setUserName(usr);
++            ua.logIn();
++            if (!ua.isLoggedIn())
++                throw new AuthenticationException(C.i18n("login.wrong_password"));
++            GameProfile selectedProfile = ua.getSelectedProfile();
++            GameProfile[] profiles = ua.getAvailableProfiles();
++            String username;
++            if (selectedProfile == null)
++                if (ArrayUtils.isNotEmpty(profiles)) {
++                    String[] names = new String[profiles.length];
++                    for (int i = 0; i < profiles.length; i++)
++                        names[i] = profiles[i].name;
++                    int sel = SwingUtils.select(names, C.i18n("login.choose_charactor"));
++                    if (sel == -1)
++                        throw new AuthenticationException("No selection");
++                    selectedProfile = profiles[sel];
++                    ua.setSelectedProfile(profiles[sel]);
++                    username = names[sel];
++                } else
++                    username = MessageBox.showInputDialog(C.i18n("login.no_charactor"));
++            else
++                username = selectedProfile.name;
++            if (username == null)
++                throw new AuthenticationException("No player");
++            result.setUserName(username)
++                    .setUserId(selectedProfile == null ? OfflineAuthenticator.getUUIDFromUserName(username) : UUIDTypeAdapter.fromUUID(selectedProfile.id));
++        }
++        return result.setUserType("mojang")
++                .setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()))
++                .setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()))
++                .setAccessToken(ua.getAuthenticatedToken())
++                .setSession(ua.getAuthenticatedToken())
++                .setClientIdentifier(clientToken);
++    }
++
++    @Override
++    public boolean isNide8() {
++        return true;
++    }
++
++    @Override
++    public boolean isLoggedIn() {
++        return ua.isLoggedIn();
++    }
++
++    @Override
++    public String id() {
++        return "nide8";
++    }
++
++    @Override
++    public String getName() {
++        return C.i18n("login.methods.nide8");
++    }
++
++    @Override
++    public Map onSaveSettings() {
++        Map m = ua.saveForStorage();
++        m.putAll(super.onSaveSettings());
++        return m;
++    }
++
++    @Override
++    public void onLoadSettings(Map settings) {
++        super.onLoadSettings(settings);
++        if (settings == null)
++            return;
++        ua.loadFromStorage(settings);
++    }
++
++    @Override
++    public UserProfileProvider loginBySettings() throws AuthenticationException {
++        UserProfileProvider result = new UserProfileProvider();
++        ua.logIn();
++        if (!ua.isLoggedIn())
++            throw new AuthenticationException(C.i18n("login.wrong_password"));
++        GameProfile profile = ua.getSelectedProfile();
++        result.setUserName(profile.name);
++        result.setUserId(profile.id.toString());
++        result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()));
++        result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
++        result.setAccessToken(ua.getAuthenticatedToken());
++        result.setSession(ua.getAuthenticatedToken());
++        return result;
++    }
++
++    @Override
++    public void logOut() {
++        ua.logOut();
++    }
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/AuthenticationRequest.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/AuthenticationRequest.java
+new file mode 100644
+index 0000000..3cdc12e
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/AuthenticationRequest.java
+@@ -0,0 +1,77 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth.nide8;
++
++import java.util.HashMap;
++
++public class AuthenticationRequest {
++
++    private HashMap<String, Object> agent;
++    private String username, password, clientToken;
++    private boolean requestUser = true;
++
++    public HashMap<String, Object> getAgent() {
++        return agent;
++    }
++
++    public void setAgent(HashMap<String, Object> agent) {
++        this.agent = agent;
++    }
++
++    public String getUserName() {
++        return username;
++    }
++
++    public void setUserName(String username) {
++        this.username = username;
++    }
++
++    public String getPassword() {
++        return password;
++    }
++
++    public void setPassword(String password) {
++        this.password = password;
++    }
++
++    public String getClientToken() {
++        return clientToken;
++    }
++
++    public void setClientToken(String clientToken) {
++        this.clientToken = clientToken;
++    }
++
++    public boolean isRequestUser() {
++        return requestUser;
++    }
++
++    public void setRequestUser(boolean requestUser) {
++        this.requestUser = requestUser;
++    }
++
++    public AuthenticationRequest(String username, String password, String clientToken) {
++        agent = new HashMap<>();
++        agent.put("name", "Minecraft");
++        agent.put("version", 1);
++
++        this.username = username;
++        this.password = password;
++        this.clientToken = clientToken;
++    }
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/GameProfile.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/GameProfile.java
+new file mode 100644
+index 0000000..c4a8f92
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/GameProfile.java
+@@ -0,0 +1,99 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth.nide8;
++
++import com.google.gson.JsonDeserializationContext;
++import com.google.gson.JsonDeserializer;
++import com.google.gson.JsonElement;
++import com.google.gson.JsonObject;
++import com.google.gson.JsonParseException;
++import com.google.gson.JsonSerializationContext;
++import com.google.gson.JsonSerializer;
++import java.lang.reflect.Type;
++import java.util.Objects;
++import java.util.UUID;
++import org.jackhuang.hmcl.util.StrUtils;
++
++public class GameProfile {
++
++    public final UUID id;
++    public final String name;
++    public final PropertyMap properties = new PropertyMap();
++    private boolean legacy;
++
++    public GameProfile(UUID id, String name) {
++        if (id == null && StrUtils.isBlank(name))
++            throw new IllegalArgumentException("Name and ID cannot both be blank");
++
++        this.id = id;
++        this.name = name;
++    }
++
++    public boolean isComplete() {
++        return id != null && StrUtils.isNotBlank(name);
++    }
++
++    public boolean isLegacy() {
++        return legacy;
++    }
++
++    @Override
++    public int hashCode() {
++        int hash = 7;
++        hash = 29 * hash + Objects.hashCode(this.id);
++        hash = 29 * hash + Objects.hashCode(this.name);
++        return hash;
++    }
++
++    @Override
++    public boolean equals(Object o) {
++        if (this == o)
++            return true;
++        if (o == null || getClass() != o.getClass())
++            return false;
++
++        GameProfile that = (GameProfile) o;
++
++        if (id != null ? !id.equals(that.id) : that.id != null)
++            return false;
++        return name != null ? name.equals(that.name) : that.name == null;
++    }
++
++    public static class GameProfileSerializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {
++
++        @Override
++        public GameProfile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
++            if (!(json instanceof JsonObject))
++                throw new JsonParseException("The json element is not a JsonObject.");
++            JsonObject object = (JsonObject) json;
++            UUID id = object.has("id") ? context.deserialize(object.get("id"), UUID.class) : null;
++            String name = object.has("name") ? object.getAsJsonPrimitive("name").getAsString() : null;
++            return new GameProfile(id, name);
++        }
++
++        @Override
++        public JsonElement serialize(GameProfile src, Type typeOfSrc, JsonSerializationContext context) {
++            JsonObject result = new JsonObject();
++            if (src.id != null)
++                result.add("id", context.serialize(src.id));
++            if (src.name != null)
++                result.addProperty("name", src.name);
++            return result;
++        }
++    }
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/Property.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/Property.java
+new file mode 100644
+index 0000000..e681c4c
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/Property.java
+@@ -0,0 +1,28 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth.nide8;
++
++public class Property {
++
++    public final String name, value;
++
++    public Property(String name, String value) {
++        this.name = name;
++        this.value = value;
++    }
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/PropertyMap.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/PropertyMap.java
+new file mode 100644
+index 0000000..4472062
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/PropertyMap.java
+@@ -0,0 +1,115 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth.nide8;
++
++import com.google.gson.JsonArray;
++import com.google.gson.JsonDeserializationContext;
++import com.google.gson.JsonDeserializer;
++import com.google.gson.JsonElement;
++import com.google.gson.JsonObject;
++import com.google.gson.JsonParseException;
++import com.google.gson.JsonPrimitive;
++import com.google.gson.JsonSerializationContext;
++import com.google.gson.JsonSerializer;
++import java.lang.reflect.Type;
++import java.util.ArrayList;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++import org.jackhuang.hmcl.api.HMCLog;
++
++public class PropertyMap extends HashMap<String, Property> {
++
++    private static final long serialVersionUID = 362498820763181265L;
++
++    public List<Map<String, String>> list() {
++        List<Map<String, String>> properties = new ArrayList<>();
++        for (Property profileProperty : values()) {
++            Map<String, String> property = new HashMap<>();
++            property.put("name", profileProperty.name);
++            property.put("value", profileProperty.value);
++            properties.add(property);
++        }
++        return properties;
++    }
++
++    public void fromList(List<Map<String, String>> list) {
++        try {
++            for (Map<String, String> propertyMap : list) {
++                String name = propertyMap.get("name");
++                String value = propertyMap.get("value");
++                put(name, new Property(name, value));
++            }
++        } catch (Throwable t) {
++            HMCLog.warn("Failed to deserialize properties", t);
++        }
++    }
++
++    public static class Serializer implements JsonSerializer<PropertyMap>, JsonDeserializer<PropertyMap> {
++
++        @Override
++        public PropertyMap deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
++            PropertyMap result = new PropertyMap();
++            if ((json instanceof JsonObject)) {
++                JsonObject object = (JsonObject) json;
++
++                for (Map.Entry<String, JsonElement> entry : object.entrySet())
++                    if (entry.getValue() instanceof JsonArray)
++                        for (JsonElement element : (JsonArray) entry.getValue())
++                            result.put(entry.getKey(), new Property(entry.getKey(), element.getAsString()));
++            } else if ((json instanceof JsonArray))
++                for (JsonElement element : (JsonArray) json)
++                    if ((element instanceof JsonObject)) {
++                        JsonObject object = (JsonObject) element;
++                        String name = object.getAsJsonPrimitive("name").getAsString();
++                        String value = object.getAsJsonPrimitive("value").getAsString();
++                        result.put(name, new Property(name, value));
++                    }
++
++            return result;
++        }
++
++        @Override
++        public JsonElement serialize(PropertyMap src, Type typeOfSrc, JsonSerializationContext context) {
++            JsonArray result = new JsonArray();
++            for (Property property : src.values()) {
++                JsonObject object = new JsonObject();
++                object.addProperty("name", property.name);
++                object.addProperty("value", property.value);
++                result.add(object);
++            }
++
++            return result;
++        }
++    }
++
++    public static class LegacySerializer
++        implements JsonSerializer<PropertyMap> {
++
++        @Override
++        public JsonElement serialize(PropertyMap src, Type typeOfSrc, JsonSerializationContext context) {
++            JsonObject result = new JsonObject();
++            for (PropertyMap.Entry<String, Property> entry : src.entrySet()) {
++                JsonArray values = new JsonArray();
++                values.add(new JsonPrimitive(entry.getValue().value));
++                result.add(entry.getKey(), values);
++            }
++            return result;
++        }
++    }
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/RefreshRequest.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/RefreshRequest.java
+new file mode 100644
+index 0000000..08c4123
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/RefreshRequest.java
+@@ -0,0 +1,64 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth.nide8;
++
++public class RefreshRequest {
++
++    private String clientToken;
++    private String accessToken;
++    private GameProfile selectedProfile;
++    private boolean requestUser = true;
++
++    public RefreshRequest(String accessToken, String clientToken) {
++        this.clientToken = clientToken;
++        this.accessToken = accessToken;
++    }
++
++    public String getClientToken() {
++        return clientToken;
++    }
++
++    public void setClientToken(String clientToken) {
++        this.clientToken = clientToken;
++    }
++
++    public String getAccessToken() {
++        return accessToken;
++    }
++
++    public void setAccessToken(String accessToken) {
++        this.accessToken = accessToken;
++    }
++
++    public GameProfile getSelectedProfile() {
++        return selectedProfile;
++    }
++
++    public void setSelectedProfile(GameProfile selectedProfile) {
++        this.selectedProfile = selectedProfile;
++    }
++
++    public boolean isRequestUser() {
++        return requestUser;
++    }
++
++    public void setRequestUser(boolean requestUser) {
++        this.requestUser = requestUser;
++    }
++
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/Response.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/Response.java
+new file mode 100644
+index 0000000..407cfde
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/Response.java
+@@ -0,0 +1,40 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth.nide8;
++
++import com.google.gson.annotations.SerializedName;
++
++public class Response {
++
++    @SerializedName("accessToken")
++    public String accessToken;
++    @SerializedName("clientToken")
++    public String clientToken;
++    @SerializedName("selectedProfile")
++    public GameProfile selectedProfile;
++    @SerializedName("availableProfiles")
++    public GameProfile[] availableProfiles;
++    @SerializedName("user")
++    public User user;
++    @SerializedName("error")
++    public String error;
++    @SerializedName("errorMessage")
++    public String errorMessage;
++    @SerializedName("cause")
++    public String cause;
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/UUIDTypeAdapter.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/UUIDTypeAdapter.java
+new file mode 100644
+index 0000000..4d3668f
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/UUIDTypeAdapter.java
+@@ -0,0 +1,45 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth.nide8;
++
++import com.google.gson.TypeAdapter;
++import com.google.gson.stream.JsonReader;
++import com.google.gson.stream.JsonWriter;
++import java.io.IOException;
++import java.util.UUID;
++
++public class UUIDTypeAdapter extends TypeAdapter<UUID> {
++
++    @Override
++    public void write(JsonWriter out, UUID value) throws IOException {
++        out.value(fromUUID(value));
++    }
++
++    @Override
++    public UUID read(JsonReader in) throws IOException {
++        return fromString(in.nextString());
++    }
++
++    public static String fromUUID(UUID value) {
++        return value.toString().replace("-", "");
++    }
++
++    public static UUID fromString(String input) {
++        return UUID.fromString(input.replaceFirst("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5"));
++    }
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/User.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/User.java
+new file mode 100644
+index 0000000..907f578
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/User.java
+@@ -0,0 +1,44 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth.nide8;
++
++public class User {
++
++    private String id;
++    private PropertyMap properties;
++
++    public User() {
++    }
++
++    public String getId() {
++        return id;
++    }
++
++    public void setId(String id) {
++        this.id = id;
++    }
++
++    public PropertyMap getProperties() {
++        return properties;
++    }
++
++    public void setProperties(PropertyMap properties) {
++        this.properties = properties;
++    }
++
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/UserType.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/UserType.java
+new file mode 100644
+index 0000000..25aa986
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/UserType.java
+@@ -0,0 +1,55 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ * 
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth.nide8;
++
++import java.util.HashMap;
++import java.util.Map;
++
++/**
++ *
++ * @author huang
++ */
++public enum UserType {
++
++    LEGACY("legacy"), MOJANG("mojang");
++
++    private static final Map<String, UserType> BY_NAME;
++    private final String name;
++
++    private UserType(String name) {
++        this.name = name;
++    }
++
++    public static UserType byName(String name) {
++        return BY_NAME.get(name.toLowerCase());
++    }
++    
++    public static UserType byLegacy(boolean isLegacy) {
++        return isLegacy ? LEGACY : MOJANG;
++    }
++
++    public String getName() {
++        return this.name;
++    }
++
++    static {
++        BY_NAME = new HashMap();
++        for (UserType type : values())
++            BY_NAME.put(type.name, type);
++    }
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/ValidateRequest.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/ValidateRequest.java
+new file mode 100644
+index 0000000..f55d1aa
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/ValidateRequest.java
+@@ -0,0 +1,33 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ * 
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth.nide8;
++
++/**
++ *
++ * @author huang
++ */
++public class ValidateRequest {
++    private String clientToken;
++    private String accessToken;
++    
++    public ValidateRequest(YggdrasilAuthentication authentication) {
++        clientToken = authentication.getClientToken();
++        accessToken = authentication.getAuthenticatedToken();
++    }
++    
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/YggdrasilAuthentication.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/YggdrasilAuthentication.java
+new file mode 100644
+index 0000000..b858258
+--- /dev/null
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/auth/nide8/YggdrasilAuthentication.java
+@@ -0,0 +1,284 @@
++/*
++ * Hello Minecraft! Launcher.
++ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
++ */
++package org.jackhuang.hmcl.core.auth.nide8;
++
++import org.jackhuang.hmcl.api.auth.AuthenticationException;
++import com.google.gson.Gson;
++import com.google.gson.GsonBuilder;
++import com.google.gson.JsonParseException;
++import java.io.IOException;
++import java.net.Proxy;
++import java.net.URL;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.Objects;
++import java.util.UUID;
++import org.jackhuang.hmcl.util.ArrayUtils;
++import org.jackhuang.hmcl.util.C;
++import org.jackhuang.hmcl.api.HMCLog;
++import org.jackhuang.hmcl.util.net.NetUtils;
++import org.jackhuang.hmcl.util.StrUtils;
++
++public class YggdrasilAuthentication {
++
++    public static final Gson GSON = new GsonBuilder()
++            .registerTypeAdapter(GameProfile.class, new GameProfile.GameProfileSerializer())
++            .registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer())
++            .registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
++
++    protected static final String BASE_URL = "http://auth.nide8.com/";
++
++    protected static final String STORAGE_KEY_ACCESS_TOKEN = "accessToken";
++    protected static final String STORAGE_KEY_PROFILE_NAME = "displayName";
++    protected static final String STORAGE_KEY_PROFILE_ID = "uuid";
++    protected static final String STORAGE_KEY_PROFILE_PROPERTIES = "profileProperties";
++    protected static final String STORAGE_KEY_USER_NAME = "username";
++    protected static final String STORAGE_KEY_USER_ID = "userid";
++    protected static final String STORAGE_KEY_USER_PROPERTIES = "userProperties";
++
++    private final Proxy proxy;
++    private final String clientToken;
++    private final PropertyMap userProperties = new PropertyMap();
++
++    private String userid, username, password, accessToken;
++    private String serverid = "";
++    private UserType userType;
++    private GameProfile selectedProfile;
++    private GameProfile[] profiles;
++    private boolean isOnline;
++
++    public YggdrasilAuthentication(Proxy proxy, String clientToken) {
++        this.proxy = proxy;
++        this.clientToken = clientToken;
++    }
++
++    // <editor-fold defaultstate="collapsed" desc="Get/Set">
++    public void setUserName(String username) {
++        if ((isLoggedIn()) && (canPlayOnline()))
++            throw new IllegalStateException("Cannot change username while logged in & online");
++
++        this.username = username;
++    }
++
++    public void setPassword(String password) {
++        if ((isLoggedIn()) && (canPlayOnline()) && (StrUtils.isNotBlank(password)))
++            throw new IllegalStateException("Cannot set password while logged in & online");
++
++        this.password = password;
++    }
++
++    public void setServerID(String serverid) {
++        this.serverid = serverid;
++    }
++
++    public GameProfile getSelectedProfile() {
++        return this.selectedProfile;
++    }
++    
++    public void setSelectedProfile(GameProfile profile) {
++        if (profiles != null)
++            for (GameProfile p : profiles)
++                if (Objects.equals(profile, p))
++                    selectedProfile = profile;
++    }
++
++    public String getUserId() {
++        return this.userid;
++    }
++
++    public PropertyMap getUserProperties() {
++        if (isLoggedIn())
++            return (PropertyMap) userProperties.clone();
++        return new PropertyMap();
++    }
++
++    public GameProfile[] getAvailableProfiles() {
++        if (profiles == null)
++            return null;
++        else
++            return profiles.clone();
++    }
++
++    public String getAuthenticatedToken() {
++        return this.accessToken;
++    }
++
++    public String getClientToken() {
++        return clientToken;
++    }
++
++    // </editor-fold>
++    // <editor-fold defaultstate="collapsed" desc="Log In/Out">
++    public boolean canPlayOnline() {
++        return isLoggedIn() && getSelectedProfile() != null && this.isOnline;
++    }
++
++    public boolean canLogIn() {
++        return !canPlayOnline() && StrUtils.isNotBlank(username) && (StrUtils.isNotBlank(password) || StrUtils.isNotBlank(getAuthenticatedToken()));
++    }
++
++    public boolean isLoggedIn() {
++        return StrUtils.isNotBlank(this.accessToken);
++    }
++
++    public void logIn() throws AuthenticationException {
++        if (StrUtils.isBlank(username))
++            throw new AuthenticationException(C.i18n("login.invalid_username"));
++
++        if (StrUtils.isNotBlank(getAuthenticatedToken())) {
++            if (StrUtils.isBlank(getUserId()))
++                if (StrUtils.isNotBlank(username))
++                    userid = username;
++                else
++                    throw new AuthenticationException(C.i18n("login.invalid_uuid_and_username"));
++            if (checkTokenValidity()) {
++                isOnline = true;
++                return;
++            }
++            logInImpl(NetUtils.constantURL(BASE_URL + this.serverid + "authserver/refresh"), new RefreshRequest(getAuthenticatedToken(), clientToken));
++        } else if (StrUtils.isNotBlank(password))
++            logInImpl(NetUtils.constantURL(BASE_URL + this.serverid + "authserver/authenticate"), new AuthenticationRequest(username, password, clientToken));
++        else
++            throw new AuthenticationException(C.i18n("login.invalid_password"));
++    }
++
++    private void logInImpl(URL url, Object input) throws AuthenticationException {
++        Response response = makeRequest(url, input, Response.class);
++
++        if (!clientToken.equals(response.clientToken))
++            throw new AuthenticationException(C.i18n("login.changed_client_token"));
++
++        if (response.selectedProfile != null)
++            userType = UserType.byLegacy(response.selectedProfile.isLegacy());
++        else if (ArrayUtils.isNotEmpty(response.availableProfiles))
++            userType = UserType.byLegacy(response.availableProfiles[0].isLegacy());
++
++        User user = response.user;
++        userid = user != null && user.getId() != null ? user.getId() : username;
++
++        isOnline = true;
++        profiles = response.availableProfiles;
++        selectedProfile = response.selectedProfile;
++        userProperties.clear();
++        this.accessToken = response.accessToken;
++
++        if (user != null && user.getProperties() != null)
++            userProperties.putAll(user.getProperties());
++    }
++
++    protected <T extends Response> T makeRequest(URL url, Object input, Class<T> clazz)
++            throws AuthenticationException {
++        try {
++            String jsonResult = input == null ? NetUtils.get(url, proxy) : NetUtils.post(url, GSON.toJson(input), "application/json", proxy);
++            T response = (T) GSON.fromJson(jsonResult, clazz);
++            if (response == null)
++                return null;
++
++            if (StrUtils.isNotBlank(response.error)) {
++                HMCLog.err("Failed to log in, the auth server returned an error: " + response.error + ", message: " + response.errorMessage + ", cause: " + response.cause);
++                if (response.errorMessage != null && response.errorMessage.contains("Invalid token"))
++                    response.errorMessage = C.i18n("login.invalid_token");
++                throw new AuthenticationException("Request error: " + response.errorMessage);
++            }
++
++            return response;
++        } catch (IOException | IllegalStateException | JsonParseException e) {
++            throw new AuthenticationException(C.i18n("login.failed.connect_authentication_server"), e);
++        }
++    }
++
++    protected boolean checkTokenValidity() {
++        ValidateRequest request = new ValidateRequest(this);
++        try {
++            makeRequest(NetUtils.constantURL(BASE_URL + this.serverid + "authserver/validate"), request, Response.class);
++            return true;
++        } catch (AuthenticationException ex) {
++            return false;
++        }
++    }
++
++    public void logOut() {
++        password = null;
++        userid = null;
++        selectedProfile = null;
++        userProperties.clear();
++
++        accessToken = null;
++        profiles = null;
++        isOnline = false;
++    }
++
++    // </editor-fold>
++    // <editor-fold defaultstate="collapsed" desc="Settings Storage">
++    public void loadFromStorage(Map<String, Object> credentials) {
++        logOut();
++
++        try {
++            setUserName((String) credentials.get(STORAGE_KEY_USER_NAME));
++
++            if (credentials.containsKey(STORAGE_KEY_USER_ID))
++                userid = (String) credentials.get(STORAGE_KEY_USER_ID);
++            else
++                userid = username;
++
++            if (credentials.containsKey(STORAGE_KEY_USER_PROPERTIES))
++                userProperties.fromList((List<Map<String, String>>) credentials.get(STORAGE_KEY_USER_PROPERTIES));
++
++            if ((credentials.containsKey(STORAGE_KEY_PROFILE_NAME)) && (credentials.containsKey(STORAGE_KEY_PROFILE_ID))) {
++                GameProfile profile = new GameProfile(UUIDTypeAdapter.fromString((String) credentials.get(STORAGE_KEY_PROFILE_ID)), (String) credentials.get(STORAGE_KEY_PROFILE_NAME));
++                if (credentials.containsKey(STORAGE_KEY_PROFILE_PROPERTIES))
++                    profile.properties.fromList((List<Map<String, String>>) credentials.get(STORAGE_KEY_PROFILE_PROPERTIES));
++                selectedProfile = profile;
++            }
++
++            this.accessToken = (String) credentials.get(STORAGE_KEY_ACCESS_TOKEN);
++        } catch (Exception e) {
++            HMCLog.err("Failed to load yggdrasil authenticator settings, maybe its format is malformed.", e);
++
++            logOut();
++        }
++    }
++
++    public Map<String, Object> saveForStorage() {
++        Map<String, Object> result = new HashMap<>();
++
++        if (username != null)
++            result.put(STORAGE_KEY_USER_NAME, username);
++        if (getUserId() != null)
++            result.put(STORAGE_KEY_USER_ID, getUserId());
++
++        if (!getUserProperties().isEmpty())
++            result.put(STORAGE_KEY_USER_PROPERTIES, getUserProperties().list());
++
++        GameProfile sel = getSelectedProfile();
++        if (sel != null) {
++            result.put(STORAGE_KEY_PROFILE_NAME, sel.name);
++            result.put(STORAGE_KEY_PROFILE_ID, sel.id);
++            if (!sel.properties.isEmpty())
++                result.put(STORAGE_KEY_PROFILE_PROPERTIES, sel.properties.list());
++        }
++
++        if (StrUtils.isNotBlank(getAuthenticatedToken()))
++            result.put(STORAGE_KEY_ACCESS_TOKEN, getAuthenticatedToken());
++
++        return result;
++    }
++
++    // </editor-fold>
++}
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/launch/AbstractMinecraftLoader.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/launch/AbstractMinecraftLoader.java
+index aa62adf..a96a244 100644
+--- a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/launch/AbstractMinecraftLoader.java
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/launch/AbstractMinecraftLoader.java
+@@ -48,8 +48,9 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
+     protected File gameDir;
+     protected IMinecraftService service;
+     protected final MinecraftVersion version;
++    protected String serverid;
+ 
+-    public AbstractMinecraftLoader(LaunchOptions options, IMinecraftService service, String versionId, UserProfileProvider lr) throws GameException {
++    public AbstractMinecraftLoader(LaunchOptions options, IMinecraftService service, String versionId, String ServerID, UserProfileProvider lr) throws GameException {
+         if (service.version().getVersionById(versionId) == null)
+             throw new GameException("No version: " + versionId);
+         this.lr = lr;
+@@ -58,6 +59,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
+         this.service = service;
+         this.gameDir = service.baseDirectory();
+         this.version = service.version().getVersionById(versionId).resolve(service.version());
++        this.serverid = ServerID;
+     }
+ 
+     @Override
+@@ -79,6 +81,9 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
+         }
+         res.add(options.getJavaDir());
+ 
++		if(this.serverid == null || this.serverid.isEmpty())
++			this.serverid = "";
++        res.add("-javaagent:" + this.gameDir.getAbsolutePath() + "/nide8auth.jar=" + this.serverid);
+         if (options.hasJavaArgs())
+             res.addAll(Arrays.asList(StrUtils.tokenize(options.getJavaArgs())));
+ 
+diff --git a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/launch/MinecraftLoader.java b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/launch/MinecraftLoader.java
+index 8a6af81..f6d34c9 100644
+--- a/HMCLCore/src/main/java/org/jackhuang/hmcl/core/launch/MinecraftLoader.java
++++ b/HMCLCore/src/main/java/org/jackhuang/hmcl/core/launch/MinecraftLoader.java
+@@ -38,8 +38,8 @@ import org.jackhuang.hmcl.core.version.LoggingInfo;
+  */
+ public class MinecraftLoader extends AbstractMinecraftLoader {
+ 
+-    public MinecraftLoader(LaunchOptions p, IMinecraftService provider, UserProfileProvider lr) throws GameException {
+-        super(p, provider, p.getLaunchVersion(), lr);
++    public MinecraftLoader(LaunchOptions p, IMinecraftService provider, String ServerID, UserProfileProvider lr) throws GameException {
++        super(p, provider, p.getLaunchVersion(), ServerID, lr);
+     }
+ 
+     @Override
+diff --git a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N.lang b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N.lang
+index 0480601..e7cbad5 100644
+--- a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N.lang
++++ b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N.lang
+@@ -100,6 +100,7 @@ login.profile.selected=Can't modify the profile, logout and go retry.
+ 
+ login.methods.yggdrasil=Mojang
+ login.methods.offline=Offline
++login.methods.nide8=Universal Login
+ login.methods.no_method=No login method
+ 
+ log.playername_null=The player name is empty.
+@@ -146,6 +147,7 @@ ui.button.settings=Settings
+ ui.button.about=About
+ ui.button.others=Others
+ ui.button.logout=Log Out
++ui.button.register=Register
+ ui.button.download=Download
+ ui.button.retry=Retry
+ ui.button.delete=Delete
+@@ -341,6 +343,8 @@ launcher.tab.about=About
+ launcher.title.game=Games
+ launcher.title.main=Home
+ launcher.title.launcher=Launcher
++launcher.serverid=Server UUID
++launcher.serverid_tip=Fill in 32 length server uuid here
+ 
+ versions.release=Release
+ versions.snapshot=Snapshot
+diff --git a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N.properties b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N.properties
+index ca52b6f..9669628 100644
+--- a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N.properties
++++ b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N.properties
+@@ -100,6 +100,7 @@ login.profile.selected=Can't modify the profile, logout and go retry.
+ 
+ login.methods.yggdrasil=Mojang
+ login.methods.offline=Offline
++login.methods.nide8=Universal Login
+ login.methods.no_method=No login method
+ 
+ log.playername_null=The player name is empty.
+@@ -146,6 +147,7 @@ ui.button.settings=Settings
+ ui.button.about=About
+ ui.button.others=Others
+ ui.button.logout=Log Out
++ui.button.register=Register
+ ui.button.download=Download
+ ui.button.retry=Retry
+ ui.button.delete=Delete
+@@ -341,6 +343,8 @@ launcher.tab.about=About
+ launcher.title.game=Games
+ launcher.title.main=Home
+ launcher.title.launcher=Launcher
++launcher.serverid=Server UUID
++launcher.serverid_tip=Fill in 32 length server uuid here
+ 
+ versions.release=Release
+ versions.snapshot=Snapshot
+diff --git a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_ru.lang b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_ru.lang
+index 30dd593..905cb6a 100644
+--- a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_ru.lang
++++ b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_ru.lang
+@@ -100,6 +100,7 @@ login.profile.selected=Не могу изменить профиль, выйди
+ 
+ login.methods.yggdrasil=Email и пароль
+ login.methods.offline=Введите ваш ник
++login.methods.nide8=Universal Login
+ login.methods.no_method=Нет способа входа
+ 
+ log.playername_null=Ник игрока пусто.
+@@ -146,6 +147,7 @@ ui.button.settings=Настройки
+ ui.button.about=About
+ ui.button.others=Другие
+ ui.button.logout=Выйти
++ui.button.register=Register
+ ui.button.download=Скачать
+ ui.button.retry=Повторить
+ ui.button.delete=Удалить
+@@ -341,6 +343,8 @@ launcher.tab.about=Версия
+ launcher.title.game=Игры
+ launcher.title.main=Главная
+ launcher.title.launcher=Лаунчер
++launcher.serverid=Server UUID
++launcher.serverid_tip=Fill in 32 length server uuid here
+ 
+ versions.release=Release
+ versions.snapshot=Snapshot
+diff --git a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_ru.properties b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_ru.properties
+index 949e8c2..cdff6c1 100644
+--- a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_ru.properties
++++ b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_ru.properties
+@@ -100,6 +100,7 @@ login.profile.selected=\u041d\u0435 \u043c\u043e\u0433\u0443 \u0438\u0437\u043c\
+ 
+ login.methods.yggdrasil=Email \u0438 \u043f\u0430\u0440\u043e\u043b\u044c
+ login.methods.offline=\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0432\u0430\u0448 \u043d\u0438\u043a
++login.methods.nide8=Universal Login
+ login.methods.no_method=\u041d\u0435\u0442 \u0441\u043f\u043e\u0441\u043e\u0431\u0430 \u0432\u0445\u043e\u0434\u0430
+ 
+ log.playername_null=\u041d\u0438\u043a \u0438\u0433\u0440\u043e\u043a\u0430 \u043f\u0443\u0441\u0442\u043e.
+@@ -146,6 +147,7 @@ ui.button.settings=\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438
+ ui.button.about=About
+ ui.button.others=\u0414\u0440\u0443\u0433\u0438\u0435
+ ui.button.logout=\u0412\u044b\u0439\u0442\u0438
++ui.button.register=Register
+ ui.button.download=\u0421\u043a\u0430\u0447\u0430\u0442\u044c
+ ui.button.retry=\u041f\u043e\u0432\u0442\u043e\u0440\u0438\u0442\u044c
+ ui.button.delete=\u0423\u0434\u0430\u043b\u0438\u0442\u044c
+@@ -341,6 +343,8 @@ launcher.tab.about=\u0412\u0435\u0440\u0441\u0438\u044f
+ launcher.title.game=\u0418\u0433\u0440\u044b
+ launcher.title.main=\u0413\u043b\u0430\u0432\u043d\u0430\u044f
+ launcher.title.launcher=\u041b\u0430\u0443\u043d\u0447\u0435\u0440
++launcher.serverid=Server UUID
++launcher.serverid_tip=Fill in 32 length server uuid here
+ 
+ versions.release=Release
+ versions.snapshot=Snapshot
+diff --git a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_vi.lang b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_vi.lang
+index a5a32c9..6d2fa73 100644
+--- a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_vi.lang
++++ b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_vi.lang
+@@ -100,6 +100,7 @@ login.profile.selected=Không chỉnh sửa được cấu hình, bạn phải 
+ 
+ login.methods.yggdrasil=Mojang
+ login.methods.offline=Offline
++login.methods.nide8=Universal Login
+ login.methods.no_method=Không có chế độ nào
+ 
+ log.playername_null=Tên của người chơi trống.
+@@ -144,6 +145,7 @@ ui.button.settings=Cài đặt
+ ui.button.about=About
+ ui.button.others=Khác
+ ui.button.logout=Đăng xuất
++ui.button.register=Register
+ ui.button.download=Tải về
+ ui.button.retry=Thử lại
+ ui.button.delete=Xóa
+@@ -339,6 +341,8 @@ launcher.tab.about=About
+ launcher.title.game=Phiên bản & Mods
+ launcher.title.main=HMCL Main
+ launcher.title.launcher=Launcher
++launcher.serverid=Server UUID
++launcher.serverid_tip=Fill in 32 length server uuid here
+ 
+ versions.release=Chính thức
+ versions.snapshot=Snapshot
+diff --git a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_vi.properties b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_vi.properties
+index 8073b82..23ba7a9 100644
+--- a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_vi.properties
++++ b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_vi.properties
+@@ -100,6 +100,7 @@ login.profile.selected=Kh\u00f4ng ch\u1ec9nh s\u1eeda \u0111\u01b0\u1ee3c c\u1ea
+ 
+ login.methods.yggdrasil=Mojang
+ login.methods.offline=Offline
++login.methods.nide8=Universal Login
+ login.methods.no_method=Kh\u00f4ng c\u00f3 ch\u1ebf \u0111\u1ed9 n\u00e0o
+ 
+ log.playername_null=T\u00ean c\u1ee7a ng\u01b0\u1eddi ch\u01a1i tr\u1ed1ng.
+@@ -144,6 +145,7 @@ ui.button.settings=C\u00e0i \u0111\u1eb7t
+ ui.button.about=About
+ ui.button.others=Kh\u00e1c
+ ui.button.logout=\u0110\u0103ng xu\u1ea5t
++ui.button.register=Register
+ ui.button.download=T\u1ea3i v\u1ec1
+ ui.button.retry=Th\u1eed l\u1ea1i
+ ui.button.delete=X\u00f3a
+@@ -339,6 +341,8 @@ launcher.tab.about=About
+ launcher.title.game=Phi\u00ean b\u1ea3n & Mods
+ launcher.title.main=HMCL Main
+ launcher.title.launcher=Launcher
++launcher.serverid=Server UUID
++launcher.serverid_tip=Fill in 32 length server uuid here
+ 
+ versions.release=Ch\u00ednh th\u1ee9c
+ versions.snapshot=Snapshot
+diff --git a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh.lang b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh.lang
+index 628b724..7e314f4 100644
+--- a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh.lang
++++ b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh.lang
+@@ -100,6 +100,7 @@ login.profile.selected=無法修改遊戲資料. 你必須登出再返回.
+ 
+ login.methods.yggdrasil=正版登錄
+ login.methods.offline=離線模式
++login.methods.nide8=統一通行證
+ login.methods.no_method=沒有登入方式...
+ 
+ log.playername_null=玩家名為空，這代表著登錄方法出現問題
+@@ -146,6 +147,7 @@ ui.button.settings=
+ ui.button.about=關於
+ ui.button.others=其他
+ ui.button.logout=登出
++ui.button.register=註冊
+ ui.button.download=下載
+ ui.button.retry=重試
+ ui.button.delete=刪除
+@@ -341,6 +343,8 @@ launcher.tab.about=關於
+ launcher.title.game=遊戲設定
+ launcher.title.main=主頁
+ launcher.title.launcher=啟動器設定
++launcher.serverid=伺服器ID
++launcher.serverid_tip=在此填入32位伺服器ID
+ 
+ versions.release=穩定版
+ versions.snapshot=快照版
+diff --git a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh.properties b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh.properties
+index 2e9c908..30700a2 100644
+--- a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh.properties
++++ b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh.properties
+@@ -100,6 +100,7 @@ login.profile.selected=\u7121\u6cd5\u4fee\u6539\u904a\u6232\u8cc7\u6599. \u4f60\
+ 
+ login.methods.yggdrasil=\u6b63\u7248\u767b\u9304
+ login.methods.offline=\u96e2\u7dda\u6a21\u5f0f
++login.methods.nide8=\u7d71\u4e00\u901a\u884c\u8b49
+ login.methods.no_method=\u6c92\u6709\u767b\u5165\u65b9\u5f0f...
+ 
+ log.playername_null=\u73a9\u5bb6\u540d\u70ba\u7a7a\uff0c\u9019\u4ee3\u8868\u8457\u767b\u9304\u65b9\u6cd5\u51fa\u73fe\u554f\u984c
+@@ -146,6 +147,7 @@ ui.button.settings=
+ ui.button.about=\u95dc\u65bc
+ ui.button.others=\u5176\u4ed6
+ ui.button.logout=\u767b\u51fa
++ui.button.register=\u8a3b\u518a
+ ui.button.download=\u4e0b\u8f09
+ ui.button.retry=\u91cd\u8a66
+ ui.button.delete=\u522a\u9664
+@@ -341,6 +343,8 @@ launcher.tab.about=\u95dc\u65bc
+ launcher.title.game=\u904a\u6232\u8a2d\u5b9a
+ launcher.title.main=\u4e3b\u9801
+ launcher.title.launcher=\u555f\u52d5\u5668\u8a2d\u5b9a
++launcher.serverid=\u4f3a\u670d\u5668ID
++launcher.serverid_tip=\u5728\u6b64\u586b\u516532\u4f4d\u4f3a\u670d\u5668ID
+ 
+ versions.release=\u7a69\u5b9a\u7248
+ versions.snapshot=\u5feb\u7167\u7248
+diff --git a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh_CN.lang b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh_CN.lang
+index a0c15aa..e5282d4 100644
+--- a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh_CN.lang
++++ b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh_CN.lang
+@@ -100,6 +100,7 @@ login.profile.selected=无法修改游戏资料. 你必须登出再返回.
+ 
+ login.methods.yggdrasil=正版登录
+ login.methods.offline=离线模式
++login.methods.nide8=统一通行证
+ login.methods.no_method=没有登入方式...
+ 
+ log.playername_null=玩家名为空，这代表着登录方法出现问题
+@@ -146,6 +147,7 @@ ui.button.settings=
+ ui.button.about=关于
+ ui.button.others=其他
+ ui.button.logout=登出
++ui.button.register=注册
+ ui.button.download=下载
+ ui.button.retry=重试
+ ui.button.delete=删除
+@@ -341,6 +343,8 @@ launcher.tab.about=关于
+ launcher.title.game=游戏设置
+ launcher.title.main=主页
+ launcher.title.launcher=启动器设置
++launcher.serverid=服务器ID
++launcher.serverid_tip=在此填入32位服务器ID
+ 
+ versions.release=稳定版
+ versions.snapshot=快照版
+diff --git a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh_CN.properties b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh_CN.properties
+index f29e920..faffaf8 100644
+--- a/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh_CN.properties
++++ b/HMCLCore/src/main/resources/org/jackhuang/hmcl/lang/I18N_zh_CN.properties
+@@ -100,6 +100,7 @@ login.profile.selected=\u65e0\u6cd5\u4fee\u6539\u6e38\u620f\u8d44\u6599. \u4f60\
+ 
+ login.methods.yggdrasil=\u6b63\u7248\u767b\u5f55
+ login.methods.offline=\u79bb\u7ebf\u6a21\u5f0f
++login.methods.nide8=\u7edf\u4e00\u901a\u884c\u8bc1
+ login.methods.no_method=\u6ca1\u6709\u767b\u5165\u65b9\u5f0f...
+ 
+ log.playername_null=\u73a9\u5bb6\u540d\u4e3a\u7a7a\uff0c\u8fd9\u4ee3\u8868\u7740\u767b\u5f55\u65b9\u6cd5\u51fa\u73b0\u95ee\u9898
+@@ -146,6 +147,7 @@ ui.button.settings=
+ ui.button.about=\u5173\u4e8e
+ ui.button.others=\u5176\u4ed6
+ ui.button.logout=\u767b\u51fa
++ui.button.register=\u6ce8\u518c
+ ui.button.download=\u4e0b\u8f7d
+ ui.button.retry=\u91cd\u8bd5
+ ui.button.delete=\u5220\u9664
+@@ -341,6 +343,8 @@ launcher.tab.about=\u5173\u4e8e
+ launcher.title.game=\u6e38\u620f\u8bbe\u7f6e
+ launcher.title.main=\u4e3b\u9875
+ launcher.title.launcher=\u542f\u52a8\u5668\u8bbe\u7f6e
++launcher.serverid=\u670d\u52a1\u5668ID
++launcher.serverid_tip=\u5728\u6b64\u586b\u516532\u4f4d\u670d\u52a1\u5668ID
+ 
+ versions.release=\u7a33\u5b9a\u7248
+ versions.snapshot=\u5feb\u7167\u7248
+-- 
+2.14.1.windows.1
+
