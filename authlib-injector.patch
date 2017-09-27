@@ -55,9 +55,18 @@ index 225ebdf..0000000
 -  FbN2oDHyPaO5j1tTaBNyVt8CAwEAAQ==
 -  -----END PUBLIC KEY-----
 diff --git a/build.gradle b/build.gradle
-index d236554..2c52227 100644
+index d236554..f21c27e 100644
 --- a/build.gradle
 +++ b/build.gradle
+@@ -11,7 +11,7 @@ repositories {
+ 
+ dependencies {
+ 	compile 'org.ow2.asm:asm:5.2'
+-	compile 'org.yaml:snakeyaml:1.18'
++	//compile 'org.yaml:snakeyaml:1.18'
+ 	compileOnly ('net.minecraft:launchwrapper:1.12') {
+ 		transitive = false
+ 	}
 @@ -19,7 +19,7 @@ dependencies {
  }
  
@@ -68,10 +77,18 @@ index d236554..2c52227 100644
  jar {
  	manifest {
 diff --git a/src/main/java/org/to2mbn/authlibinjector/AuthlibInjector.java b/src/main/java/org/to2mbn/authlibinjector/AuthlibInjector.java
-index a43e8bc..99ad816 100644
+index a43e8bc..2a8b2b9 100644
 --- a/src/main/java/org/to2mbn/authlibinjector/AuthlibInjector.java
 +++ b/src/main/java/org/to2mbn/authlibinjector/AuthlibInjector.java
-@@ -37,6 +37,8 @@ public final class AuthlibInjector {
+@@ -21,7 +21,6 @@ import org.to2mbn.authlibinjector.internal.org.json.JSONException;
+ import org.to2mbn.authlibinjector.internal.org.json.JSONObject;
+ import org.to2mbn.authlibinjector.internal.org.json.JSONTokener;
+ import org.to2mbn.authlibinjector.transform.ClassTransformer;
+-import org.yaml.snakeyaml.Yaml;
+ 
+ public final class AuthlibInjector {
+ 
+@@ -37,6 +36,8 @@ public final class AuthlibInjector {
  
  	public static void bootstrap(Consumer<ClassFileTransformer> transformerRegistry) {
  		InjectorConfig config = loadConfig();
@@ -80,7 +97,7 @@ index a43e8bc..99ad816 100644
  		ClassTransformer transformer = new ClassTransformer();
  
  		if (config.isDebug()) transformer.debug = true;
-@@ -51,48 +53,16 @@ public final class AuthlibInjector {
+@@ -51,48 +52,16 @@ public final class AuthlibInjector {
  	private static InjectorConfig loadConfig() {
  		Optional<InjectorConfig> remoteConfig = tryRemoteConfig();
  		if (remoteConfig.isPresent()) return remoteConfig.get();
@@ -136,7 +153,7 @@ index a43e8bc..99ad816 100644
  		log("trying to config remotely: {0}", url);
  		JSONObject remoteConfig;
  		try {
-@@ -102,8 +72,8 @@ public final class AuthlibInjector {
+@@ -102,8 +71,8 @@ public final class AuthlibInjector {
  			return empty();
  		}
  		InjectorConfig config = new InjectorConfig();
