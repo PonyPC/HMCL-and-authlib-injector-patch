@@ -122,7 +122,7 @@ index a43e8bc..6e6d458 100644
 -			} else {
 -				log("using config: " + configProperty);
 -				return Files.newInputStream(configFile);
-+		Path currentConfigFile = Paths.get("nide8auth.txt");
++		Path currentConfigFile = Paths.get("mods/nide8auth.txt");
 +		if (Files.exists(currentConfigFile)) {
 +			Properties pps = new Properties();
 +			try {
