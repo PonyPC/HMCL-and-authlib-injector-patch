@@ -77,18 +77,19 @@ index d236554..f21c27e 100644
  jar {
  	manifest {
 diff --git a/src/main/java/org/to2mbn/authlibinjector/AuthlibInjector.java b/src/main/java/org/to2mbn/authlibinjector/AuthlibInjector.java
-index a43e8bc..2a8b2b9 100644
+index a43e8bc..6e6d458 100644
 --- a/src/main/java/org/to2mbn/authlibinjector/AuthlibInjector.java
 +++ b/src/main/java/org/to2mbn/authlibinjector/AuthlibInjector.java
-@@ -21,7 +21,6 @@ import org.to2mbn.authlibinjector.internal.org.json.JSONException;
+@@ -21,7 +21,7 @@ import org.to2mbn.authlibinjector.internal.org.json.JSONException;
  import org.to2mbn.authlibinjector.internal.org.json.JSONObject;
  import org.to2mbn.authlibinjector.internal.org.json.JSONTokener;
  import org.to2mbn.authlibinjector.transform.ClassTransformer;
 -import org.yaml.snakeyaml.Yaml;
++import java.util.Properties;
  
  public final class AuthlibInjector {
  
-@@ -37,6 +36,8 @@ public final class AuthlibInjector {
+@@ -37,6 +37,8 @@ public final class AuthlibInjector {
  
  	public static void bootstrap(Consumer<ClassFileTransformer> transformerRegistry) {
  		InjectorConfig config = loadConfig();
@@ -97,10 +98,12 @@ index a43e8bc..2a8b2b9 100644
  		ClassTransformer transformer = new ClassTransformer();
  
  		if (config.isDebug()) transformer.debug = true;
-@@ -51,48 +52,16 @@ public final class AuthlibInjector {
+@@ -49,50 +51,33 @@ public final class AuthlibInjector {
+ 	}
+ 
  	private static InjectorConfig loadConfig() {
- 		Optional<InjectorConfig> remoteConfig = tryRemoteConfig();
- 		if (remoteConfig.isPresent()) return remoteConfig.get();
+-		Optional<InjectorConfig> remoteConfig = tryRemoteConfig();
+-		if (remoteConfig.isPresent()) return remoteConfig.get();
 -
 -		try (Reader reader = new InputStreamReader(lookupConfig(), StandardCharsets.UTF_8)) {
 -			Yaml yaml = new Yaml();
@@ -119,8 +122,21 @@ index a43e8bc..2a8b2b9 100644
 -			} else {
 -				log("using config: " + configProperty);
 -				return Files.newInputStream(configFile);
--			}
--		}
++		Path currentConfigFile = Paths.get("nide8auth.txt");
++		if (Files.exists(currentConfigFile)) {
++			Properties pps = new Properties();
++			try {
++				InputStream in = Files.newInputStream(currentConfigFile);
++				pps.load(in);
++				String value = pps.getProperty("serverid");
++				if (value != null && !value.isEmpty()) {
++					System.setProperty("server.uuid", value);
++				}
++			}catch (IOException e) {
++				e.printStackTrace();
++				log("can not read config from nide8auth.txt");
+ 			}
+ 		}
 -
 -		InputStream packedConfig = AuthlibInjector.class.getResourceAsStream("/authlib-injector.yaml");
 -		if (packedConfig != null) {
@@ -135,6 +151,8 @@ index a43e8bc..2a8b2b9 100644
 -			log("using config: ./authlib-injector.yaml");
 -			return Files.newInputStream(currentConfigFile);
 -		}
++		Optional<InjectorConfig> remoteConfig = tryRemoteConfig();
++		if (remoteConfig.isPresent()) return remoteConfig.get();
 +		return null;
  	}
  
@@ -153,7 +171,7 @@ index a43e8bc..2a8b2b9 100644
  		log("trying to config remotely: {0}", url);
  		JSONObject remoteConfig;
  		try {
-@@ -102,8 +71,8 @@ public final class AuthlibInjector {
+@@ -102,8 +87,8 @@ public final class AuthlibInjector {
  			return empty();
  		}
  		InjectorConfig config = new InjectorConfig();
